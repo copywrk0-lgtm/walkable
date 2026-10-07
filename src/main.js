@@ -348,6 +348,44 @@ for(const x of [-6.55,6.55]){
   }
 }
 
+// Light and material pass: carved stone should read through grazing light, not flat colour.
+const stoneNoise=document.createElement('canvas');stoneNoise.width=stoneNoise.height=256;
+const sn=stoneNoise.getContext('2d');const img=sn.createImageData(256,256);
+for(let i=0;i<img.data.length;i+=4){const n=118+Math.floor((Math.random()-.5)*34);img.data[i]=n;img.data[i+1]=n-7;img.data[i+2]=n-15;img.data[i+3]=255;}
+sn.putImageData(img,0,0);
+const stoneMap=new THREE.CanvasTexture(stoneNoise);stoneMap.wrapS=stoneMap.wrapT=THREE.RepeatWrapping;stoneMap.repeat.set(5,5);
+for(const m of [MAT.sandstone,MAT.sandstoneDark,MAT.sandstoneLight]){m.roughnessMap=stoneMap;m.bumpMap=stoneMap;m.bumpScale=.035;m.needsUpdate=true;}
+
+function warmSpot(x,y,z,tx,ty,tz,intensity=26,distance=11,angle=.48){
+  const l=new THREE.SpotLight('#f0b96f',intensity,distance,angle,.58,1.7);
+  l.position.set(x,y,z);l.target.position.set(tx,ty,tz);scene.add(l,l.target);return l;
+}
+// Grazing light across capitals, portals and artworks.
+for(const [x,z,tx] of [[-6.6,9.5,-7.7],[6.6,8.0,7.7],[-6.4,.3,-7.7],[6.4,-1.2,7.7],[-6.5,-8.7,-7.7],[6.5,-10,7.7]])
+  warmSpot(x,3.95,z,tx,2.15,z,18,8,.42);
+warmSpot(-4.8,4.35,1.9,0,2.7,0,30,10,.55);warmSpot(4.8,4.35,-1.9,0,2.7,0,30,10,.55);
+
+// Jali lanterns: patterned luminous screens become landmarks in the darker bays.
+function luminousJali(x,y,z,rotY=0,scale=1){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;scene.add(g);
+  const glow=new THREE.MeshBasicMaterial({color:'#d6a45e',transparent:true,opacity:.17,toneMapped:false});
+  const panel=new THREE.Mesh(new THREE.PlaneGeometry(2.25*scale,2.8*scale),glow);panel.position.z=-.055;g.add(panel);
+  const stone=new THREE.MeshStandardMaterial({color:'#8b6e50',roughness:.9});
+  for(let i=-4;i<=4;i++){for(const sign of [-1,1]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.055*scale,3.15*scale,.10*scale),stone);bar.position.x=i*.27*scale;bar.rotation.z=sign*Math.PI/4;g.add(bar);}}
+  for(const yy of [-1.52,1.52]){const rail=new THREE.Mesh(new THREE.BoxGeometry(2.65*scale,.14*scale,.16*scale),MAT.sandstoneDark);rail.position.y=yy*scale;g.add(rail);}
+  const lamp=new THREE.PointLight('#d69a50',10,4.8,2);lamp.position.set(0,0,-.55);g.add(lamp);
+}
+luminousJali(-7.70,2.15,5.55,Math.PI/2,.82);luminousJali(7.70,2.15,2.65,-Math.PI/2,.82);
+luminousJali(-7.70,2.15,-7.15,Math.PI/2,.82);luminousJali(7.70,2.15,-11.65,-Math.PI/2,.82);
+
+// A singular carved ceiling centerpiece over the mandapa.
+const canopy=new THREE.Group();canopy.position.set(0,4.39,0);scene.add(canopy);
+for(let ring=0;ring<5;ring++){
+  const count=8+ring*4,r=.38+ring*.31;
+  for(let i=0;i<count;i++){const a=i*Math.PI*2/count;const petal=new THREE.Mesh(new THREE.OctahedronGeometry(.10+ring*.012,1),ring===1?MAT.brass:MAT.sandstoneLight);petal.position.set(Math.cos(a)*r,0,Math.sin(a)*r);petal.scale.set(.62,1.15,1.5);petal.rotation.y=-a;canopy.add(petal);}
+}
+const drop=new THREE.Mesh(new THREE.ConeGeometry(.22,.52,16),MAT.brass);drop.position.y=-.27;canopy.add(drop);
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
