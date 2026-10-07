@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#e9e4d9" />
+  <meta name="description" content="Copywrk — a walkable 3D portfolio archive." />
+  <title>Copywrk — Walkable Archive</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%2311110f%22/><text x=%2250%22 y=%2264%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22%23eee9df%22>C</text></svg>" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="gallery"></canvas>
+
+    <section id="entry" class="entry-screen">
+      <div class="grain"></div>
+      <div class="entry-topline"><span>COPYWRK / ARCHIVE 001</span><span>NEW DELHI · 2026</span></div>
+      <div class="entry-center">
+        <p class="eyebrow">A WALKABLE DIGITAL PORTFOLIO</p>
+        <h1>Enter the<br><em>archive.</em></h1>
+        <p class="entry-copy">Six projects. Three rooms. One quiet little museum for the work.</p>
+        <button id="enterButton" class="enter-button" disabled>
+          <span id="enterLabel">LOADING 00%</span><span>↗</span>
+        </button>
+      </div>
+      <div class="entry-footer"><span>Desktop · click to look / WASD to move</span><span>Mobile · drag to look / joystick to move</span></div>
+    </section>
+
+    <header id="hud" class="hud hidden">
+      <button id="brandButton" class="hud-pill">COPYWRK®</button>
+      <span class="hud-center">WALKABLE ARCHIVE · 001</span>
+      <button id="indexButton" class="hud-pill">INDEX <b>06</b></button>
+    </header>
+    <div id="crosshair" class="crosshair hidden"><i></i><i></i></div>
+    <div id="desktopHint" class="desktop-hint hidden">CLICK TO CAPTURE · WASD TO WALK · ESC TO RELEASE</div>
+
+    <div id="mobileControls" class="mobile-controls hidden">
+      <div id="joystick" class="joystick"><div id="knob" class="joystick-knob"></div></div>
+      <div id="lookZone" class="look-zone"><span>DRAG TO LOOK</span></div>
+    </div>
+
+    <aside id="projectOverlay" class="overlay project-overlay" aria-hidden="true">
+      <button class="close close-light" data-close="project">CLOSE ×</button>
+      <div class="project-sheet">
+        <div class="project-visual"><img id="projectImage" alt="" /></div>
+        <div class="project-copy">
+          <div><p id="projectRoom" class="project-room"></p></div>
+          <div class="project-main">
+            <span id="projectNumber" class="project-number"></span>
+            <h2 id="projectTitle"></h2>
+            <p id="projectLede" class="project-lede"></p>
+            <p id="projectDetail" class="project-detail"></p>
+            <a id="projectLink" class="text-link" target="_blank" rel="noreferrer">OPEN LIVE PROJECT ↗</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <aside id="archiveOverlay" class="overlay archive-overlay" aria-hidden="true">
+      <button class="close close-dark" data-close="archive">CLOSE ×</button>
+      <div class="archive-heading"><span>THE COLLECTION</span><h2>Six pieces,<br><em>one walk.</em></h2></div>
+      <div id="archiveList" class="archive-list"></div>
+    </aside>
+
+    <aside id="contactOverlay" class="overlay contact-overlay" aria-hidden="true">
+      <button class="close close-dark" data-close="contact">CLOSE ×</button>
+      <div class="contact-copy">
+        <span>COPYWRK / NEW DELHI</span>
+        <h2>Make the website<br><em>part of the pitch.</em></h2>
+        <p>Strategy, design and development for visual businesses that have work worth presenting properly.</p>
+        <a class="text-link light" href="https://wa.me/919711170297?text=Hi%20Aayush%2C%20I%20saw%20the%20walkable%20archive%20and%20want%20to%20discuss%20a%20website." target="_blank" rel="noreferrer">START A PROJECT ON WHATSAPP ↗</a>
+      </div>
+      <div class="contact-footer"><span>END OF ARCHIVE</span><span>THANKS FOR WALKING THROUGH.</span></div>
+    </aside>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
