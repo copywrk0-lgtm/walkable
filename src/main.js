@@ -189,8 +189,8 @@ manager.onProgress = (_, loaded, total) => {
 manager.onLoad = () => {
   texturesReady = true;
   ui.enterButton.disabled = false;
-  ui.enterLabel.textContent = 'ENTER 3D ARCHIVE';
-  ui.loadingNote.textContent = '3D archive ready. Or skip straight to the project list.';
+  ui.enterLabel.textContent = 'ENTER EXHIBITION';
+  ui.loadingNote.textContent = 'Exhibition ready. Or open the index.';
 };
 
 const textureLoader = new THREE.TextureLoader(manager);
@@ -255,8 +255,8 @@ function makeContactTexture() {
   const c = document.createElement('canvas'); c.width = 1600; c.height = 850;
   const x = c.getContext('2d');
   x.fillStyle = '#11110f'; x.fillRect(0,0,c.width,c.height);
-  x.fillStyle = '#817c72'; x.font = '30px monospace'; x.fillText('END OF ARCHIVE', 110, 110);
-  x.fillStyle = '#eee9df'; x.font = '500 94px Georgia'; x.fillText('Have something', 110, 330); x.fillText('worth building?', 110, 440);
+  x.fillStyle = '#817c72'; x.font = '30px monospace'; x.fillText('ROOM VII / UNASSIGNED', 110, 110);
+  x.fillStyle = '#eee9df'; x.font = '700 108px Arial'; x.fillText('YOURS COULD BE', 110, 330); x.fillText('ROOM VII.', 110, 455);
   x.fillStyle = '#c8c1b6'; x.font = '28px monospace'; x.fillText('START A PROJECT  ↗', 110, 625);
   x.fillStyle = '#4a4741'; x.fillRect(110, 654, 360, 2);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
@@ -272,7 +272,7 @@ scene.add(contactArt); interactables.push(contactArt);
 function roomTitleTexture(top, bottom) {
   const c = document.createElement('canvas'); c.width=1100; c.height=220; const x=c.getContext('2d');
   x.fillStyle='#d1c7ba'; x.font='34px monospace'; x.fillText(top,20,62);
-  x.fillStyle='#f0eade'; x.font='italic 88px Georgia'; x.fillText(bottom,20,164);
+  x.fillStyle='#f0eade'; x.font='700 78px Arial'; x.fillText(bottom.toUpperCase(),20,164);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
 }
 for (const [z,top,bottom] of [[12.8,'ROOM I','INTERIORS'],[3.15,'ROOM II','TRANSFORMATIONS'],[-5.85,'ROOM III','OCCASIONS']]) {
