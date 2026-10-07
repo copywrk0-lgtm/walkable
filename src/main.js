@@ -435,6 +435,53 @@ for(const z of [-3,-1.5,0,1.5,3]) box(0,5.35,z,10.4,.18,.24,MAT.sandstoneDark);
 for(const x of [-4.7,-2.35,0,2.35,4.7]) box(x,5.18,0,.18,.18,6.5,MAT.sandstoneLight);
 const highGlow=new THREE.PointLight('#e3ad69',16,11,2);highGlow.position.set(0,5.15,0);scene.add(highGlow);
 
+// Realism pass: physically plausible renderer, aged stone variation, contact shadows and dust.
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMappingExposure = .94;
+sun.castShadow = true; sun.intensity = 1.05;
+sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-18;
+sun.shadow.bias=-.00025;
+
+// Reusable stone variants prevent the entire building reading as one CG material.
+function stoneVariant(base,rough=.93){
+  const m=new THREE.MeshStandardMaterial({color:base,roughness:rough,metalness:0,roughnessMap:stoneMap,bumpMap:stoneMap,bumpScale:.045});
+  return m;
+}
+const agedStone=[stoneVariant('#7d6249'),stoneVariant('#927459'),stoneVariant('#705744'),stoneVariant('#a18464')];
+scene.traverse(o=>{
+  if(!o.isMesh)return;
+  if([MAT.sandstone,MAT.sandstoneDark,MAT.sandstoneLight].includes(o.material) && Math.random()<.34) o.material=agedStone[Math.floor(Math.random()*agedStone.length)];
+  if(o.geometry?.type!=='PlaneGeometry'){o.castShadow=true;o.receiveShadow=true;}
+});
+
+// Soft fake contact shadows under pillars/plinths add grounding without expensive AO postprocessing.
+const contactMat=new THREE.MeshBasicMaterial({color:'#090705',transparent:true,opacity:.22,depthWrite:false});
+function contactShadow(x,z,sx=.8,sz=.8){
+  const m=new THREE.Mesh(new THREE.CircleGeometry(1,24),contactMat);m.scale.set(sx,sz,1);m.rotation.x=-Math.PI/2;m.position.set(x,.012,z);scene.add(m);
+}
+for(const z of [11.8,9.25,6.7,2.55,0,-2.55,-7.15,-9.7,-12.25]){contactShadow(-5.35,z,.72,.58);contactShadow(5.35,z,.72,.58);}
+for(const p of [[-3.15,1.72],[3.15,1.72],[-3.15,-1.72],[3.15,-1.72]]) contactShadow(p[0],p[1],.9,.75);
+
+// Imperfect floor slabs and seams make the ground read as constructed stone rather than one giant plane.
+for(const z of [11.2,9.1,7,2.7,.55,-1.6,-7.1,-9.25,-11.4]){
+  box(0,.018,z,10.1,.018,.022,new THREE.MeshBasicMaterial({color:'#32271e',transparent:true,opacity:.42}));
+}
+for(const x of [-4.6,-2.3,2.3,4.6]){
+  box(x,.019,-.4,.018,.02,26,new THREE.MeshBasicMaterial({color:'#2b211a',transparent:true,opacity:.28}));
+}
+
+// Dust motes visible only when they cross the warm light volumes.
+const dustGeo=new THREE.BufferGeometry();const dustCount=360;const pos=new Float32Array(dustCount*3);
+for(let i=0;i<dustCount;i++){pos[i*3]=(Math.random()-.5)*14;pos[i*3+1]=.3+Math.random()*5.2;pos[i*3+2]=13-Math.random()*34;}
+dustGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#d9b987',size:.018,transparent:true,opacity:.28,depthWrite:false}));scene.add(dust);
+
+// Slight warm pools at floor level emulate bounced light from sandstone.
+for(const z of [8.1,0,-9.2,-18.2]){
+ const bounce=new THREE.PointLight('#b66f38',z===-18.2?8:4.5,5.5,2);bounce.position.set(0,.45,z);scene.add(bounce);
+}
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
@@ -755,6 +802,8 @@ function animate() {
     interactHint.classList.remove('show');
   }
 
+  dust.rotation.y += dt * .006;
+  dust.position.y = Math.sin(performance.now()*.00018)*.035;
   renderer.render(scene,camera);
   requestAnimationFrame(animate);
 }
