@@ -94,9 +94,9 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#11130f');
-scene.fog = new THREE.Fog('#11130f', 14, 34);
+scene.fog = new THREE.Fog('#100c08', 17, 48);
 
-const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 55);
+const camera = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.1, 72);
 camera.position.set(0, 1.65, 11.2);
 camera.rotation.order = 'YXZ';
 
@@ -134,7 +134,11 @@ const MAT = {
   plinth1: new THREE.MeshStandardMaterial({ color: '#5b5144', roughness: 0.86 }),
   plinth2: new THREE.MeshStandardMaterial({ color: '#c2bdb4', roughness: 0.86 }),
   plinth3: new THREE.MeshStandardMaterial({ color: '#343d32', roughness: 0.86 }),
-  dark: new THREE.MeshStandardMaterial({ color: '#090a08', roughness: 0.9 })
+  dark: new THREE.MeshStandardMaterial({ color: '#090a08', roughness: 0.9 }),
+  sandstone: new THREE.MeshStandardMaterial({ color: '#8f7255', roughness: 0.94, metalness: 0.0 }),
+  sandstoneDark: new THREE.MeshStandardMaterial({ color: '#5d4937', roughness: 0.98 }),
+  sandstoneLight: new THREE.MeshStandardMaterial({ color: '#b39876', roughness: 0.92 }),
+  brass: new THREE.MeshStandardMaterial({ color: '#8c6b35', roughness: 0.58, metalness: 0.28 })
 };
 
 function box(x, y, z, sx, sy, sz, material = MAT.room1Wall, cast = false) {
@@ -168,6 +172,316 @@ for (const [z,mat] of [[4.05,MAT.room1Wall],[-4.95,MAT.room3Wall]]) {
   box(5.55, 2.25, z, 5.4, 4.5, 0.35, mat);
 }
 
+// --- temple-castle architecture -------------------------------------------
+// A stylised Indian stone mandapa rather than a generic white-box gallery.
+// The geometry stays procedural/lightweight so the exhibition still runs on phones.
+function cylinder(radiusTop, radiusBottom, height, segments, material) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments), material);
+  scene.add(m); return m;
+}
+function torus(x,y,z,r,tube,rotX,rotY,material,arc=Math.PI) {
+  const m=new THREE.Mesh(new THREE.TorusGeometry(r,tube,8,32,arc),material);
+  m.position.set(x,y,z); m.rotation.set(rotX,rotY,0); scene.add(m); return m;
+}
+function templePillar(x,z,scale=1) {
+  const g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
+  const add=(geo,mat,y)=>{const m=new THREE.Mesh(geo,mat);m.position.y=y;g.add(m);return m;};
+  add(new THREE.CylinderGeometry(.48*scale,.58*scale,.20*scale,8),MAT.sandstoneDark,.10*scale);
+  add(new THREE.CylinderGeometry(.40*scale,.48*scale,.18*scale,8),MAT.sandstoneLight,.29*scale);
+  add(new THREE.CylinderGeometry(.29*scale,.34*scale,2.72*scale,12),MAT.sandstone,1.74*scale);
+  // carved-looking shaft bands
+  for(const y of [.55,1.02,2.38,2.76]) add(new THREE.CylinderGeometry(.38*scale,.38*scale,.09*scale,12),MAT.sandstoneLight,y*scale);
+  // stepped floral/corbel capital
+  add(new THREE.CylinderGeometry(.46*scale,.32*scale,.22*scale,8),MAT.sandstoneLight,3.18*scale);
+  add(new THREE.BoxGeometry(.92*scale,.16*scale,.92*scale),MAT.sandstoneDark,3.38*scale);
+  add(new THREE.BoxGeometry(1.16*scale,.14*scale,.66*scale),MAT.sandstoneLight,3.53*scale);
+  // small diamond bosses read like hand-carved ornament at walking distance
+  for(let i=0;i<4;i++){const b=add(new THREE.OctahedronGeometry(.11*scale,0),MAT.sandstoneLight,(1.22+i*.42)*scale);b.position.x=.29*scale;b.rotation.z=Math.PI/4;}
+  return g;
+}
+// Colonnade: repeated stone pillars make the long archive read as a palace/temple hall.
+for(const z of [11.8,9.25,6.7,2.55,0,-2.55,-7.15,-9.7,-12.25]) {
+  templePillar(-5.35,z,.98); templePillar(5.35,z,.98);
+}
+// Stone beams and layered cornices bind the columns together.
+for(const x of [-5.35,5.35]) {
+  box(x,3.62,-.45,.72,.22,27.2,MAT.sandstoneDark);
+  box(x,3.80,-.45,.96,.12,27.2,MAT.sandstoneLight);
+  box(x,4.00,-.45,.62,.18,27.2,MAT.sandstone);
+}
+// Decorative transverse beams create a coffered, ceremonial ceiling rhythm.
+for(const z of [11.8,9.25,6.7,4.05,2.55,0,-2.55,-4.95,-7.15,-9.7,-12.25]) {
+  box(0,4.02,z,11.3,.18,.30,MAT.sandstoneDark);
+  for(const x of [-3.9,-1.3,1.3,3.9]) {
+    const boss=cylinder(.16,.16,.10,12,MAT.brass); boss.position.set(x,3.88,z); boss.rotation.x=Math.PI/2;
+  }
+}
+// Torana-like gateways at the room transitions: stepped lintel, brackets and a central crest.
+for(const z of [4.05,-4.95]) {
+  box(-2.42,3.18,z,.48,2.15,.55,MAT.sandstone);
+  box(2.42,3.18,z,.48,2.15,.55,MAT.sandstone);
+  box(0,4.02,z,5.35,.26,.62,MAT.sandstoneDark);
+  box(0,4.27,z,4.55,.18,.48,MAT.sandstoneLight);
+  const crest=new THREE.Mesh(new THREE.OctahedronGeometry(.34,0),MAT.brass);crest.position.set(0,4.18,z-.34);crest.rotation.z=Math.PI/4;scene.add(crest);
+  for(const x of [-1.85,1.85]){const b=box(x,3.70,z,.72,.52,.68,MAT.sandstoneLight);b.rotation.z=x<0?-.18:.18;}
+}
+// Recessed shrine-like frames behind every artwork, so the websites feel installed in stone niches.
+for(const [x,z,rot] of [[-7.72,8.1,Math.PI/2],[7.72,7.15,-Math.PI/2],[-7.72,-.35,Math.PI/2],[7.72,-1,-Math.PI/2],[-7.72,-9,Math.PI/2],[7.72,-9.75,-Math.PI/2]]) {
+  const g=new THREE.Group();g.position.set(x,2.22,z);g.rotation.y=rot;scene.add(g);
+  const back=new THREE.Mesh(new THREE.BoxGeometry(4.25,3.12,.18),MAT.sandstoneDark);back.position.z=-.22;g.add(back);
+  const top=new THREE.Mesh(new THREE.BoxGeometry(4.55,.20,.42),MAT.sandstoneLight);top.position.set(0,1.67,-.13);g.add(top);
+  for(const sx of [-2.12,2.12]){const side=new THREE.Mesh(new THREE.BoxGeometry(.20,3.18,.42),MAT.sandstoneLight);side.position.set(sx,0,-.13);g.add(side);}
+  for(const sx of [-1.65,-.82,0,.82,1.65]){const bead=new THREE.Mesh(new THREE.OctahedronGeometry(.095,0),MAT.brass);bead.position.set(sx,1.67,.11);g.add(bead);}
+}
+// Central floor inlay: restrained brass/stone medallions, not a theme-park texture.
+for(const z of [7.4,-.7,-9.4]) {
+  const ring=torus(0,.025,z,.92,.035,Math.PI/2,0,MAT.brass,Math.PI*2);
+  const core=new THREE.Mesh(new THREE.CircleGeometry(.62,32),MAT.sandstoneDark);core.rotation.x=-Math.PI/2;core.position.set(0,.018,z);scene.add(core);
+}
+
+// Architectural hierarchy: ceremonial court, grand mandapa and carved wall rhythm.
+function lotusRosette(x,y,z,scale=1) {
+  const g=new THREE.Group(); g.position.set(x,y,z); scene.add(g);
+  const center=new THREE.Mesh(new THREE.CylinderGeometry(.17*scale,.17*scale,.07*scale,16),MAT.brass);
+  center.rotation.x=Math.PI/2; g.add(center);
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4;
+    const petal=new THREE.Mesh(new THREE.SphereGeometry(.16*scale,8,6),MAT.sandstoneLight);
+    petal.scale.set(.55,1.35,.25); petal.position.set(Math.cos(a)*.31*scale,Math.sin(a)*.31*scale,0);
+    petal.rotation.z=a-Math.PI/2; g.add(petal);
+  }
+}
+function jaliPanel(x,y,z,rotY=0) {
+  const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=rotY; scene.add(g);
+  for(let i=-3;i<=3;i++){
+    const a=new THREE.Mesh(new THREE.BoxGeometry(.055,2.25,.08),MAT.sandstoneLight);
+    a.position.x=i*.32; a.rotation.z=Math.PI/4; g.add(a);
+    const b=a.clone(); b.rotation.z=-Math.PI/4; g.add(b);
+  }
+  for(const yy of [-1.18,1.18]){const rail=new THREE.Mesh(new THREE.BoxGeometry(2.5,.12,.14),MAT.sandstoneDark);rail.position.y=yy;g.add(rail);}
+}
+// Broad entrance court.
+for(const x of [-6.65,-3.35,3.35,6.65]) templePillar(x,12.7,1.08);
+box(0,4.12,12.7,14.4,.28,.58,MAT.sandstoneDark);
+box(0,4.36,12.7,12.7,.16,.46,MAT.sandstoneLight);
+lotusRosette(0,3.93,12.38,1.18);
+jaliPanel(-7.72,2.2,11.5,Math.PI/2); jaliPanel(7.72,2.2,10.6,-Math.PI/2);
+
+// Grand mandapa: heavier pillars and a layered ceiling canopy at the centre.
+for(const p of [[-3.15,1.72],[3.15,1.72],[-3.15,-1.72],[3.15,-1.72]]) templePillar(p[0],p[1],1.16);
+box(0,4.16,1.72,7.2,.30,.46,MAT.sandstoneDark); box(0,4.16,-1.72,7.2,.30,.46,MAT.sandstoneDark);
+for(let layer=0;layer<3;layer++){const slab=box(0,4.34+layer*.12,0,5-layer*.7,.10,5-layer*.7,MAT.sandstoneDark);slab.rotation.y=layer*Math.PI/12;}
+lotusRosette(0,4.18,0,1.48);
+
+// Repeated shallow reliefs and rosettes keep the walls from reading as flat game boxes.
+for(const z of [10.55,5.7,2.85,-2.85,-7.05,-11.55]){
+  for(const x of [-7.93,7.93]){
+    box(x,2.55,z,.16,2.7,1.28,MAT.sandstoneDark);
+    for(const yy of [1.55,2.12,2.69,3.26]) box(x+(x<0?.10:-.10),yy,z,.08,.08,1.05,MAT.sandstoneLight);
+  }
+}
+
+// Compressed threshold and monumental Room VII: spatial compression followed by release.
+box(-4.45,2.2,-14.15,3.55,4.4,1.25,MAT.sandstoneDark);
+box(4.45,2.2,-14.15,3.55,4.4,1.25,MAT.sandstoneDark);
+box(0,3.48,-14.15,5.45,.22,1.25,MAT.sandstoneDark);
+for(const x of [-2.48,2.48]) templePillar(x,-13.72,.86);
+
+box(0,-.08,-18.15,15.4,.16,6.4,MAT.room3Floor);
+box(-7.45,3.65,-18.15,.48,7.3,6.4,MAT.sandstoneDark);
+box(7.45,3.65,-18.15,.48,7.3,6.4,MAT.sandstoneDark);
+box(0,7.18,-18.15,15.4,.18,6.4,MAT.room3Ceiling);
+box(0,3.65,-21.28,15.4,7.3,.48,MAT.sandstoneDark);
+for(const z of [-16.15,-18.15,-20.15]){templePillar(-5.5,z,1.2);templePillar(5.5,z,1.2);box(0,4.72,z,11.6,.24,.42,MAT.sandstoneDark);}
+for(const x of [-5.5,5.5]){box(x,4.52,-18.15,.86,.24,5.55,MAT.sandstone);box(x,4.78,-18.15,1.10,.16,5.55,MAT.sandstoneLight);}
+lotusRosette(0,6.93,-18.15,2.05);
+for(const x of [-3.5,0,3.5]) for(const z of [-17,-19.3]) lotusRosette(x,6.93,z,.68);
+addPointLight(-4.7,-18.2,'#d18b46',22,9); addPointLight(4.7,-18.2,'#d18b46',22,9);
+const finalGlow=new THREE.PointLight('#f3c27d',28,12,2);finalGlow.position.set(0,5.6,-20.2);scene.add(finalGlow);
+
+// Authored-looking hero ornament: denser only at important bays, inspired by Indian carved-stone halls.
+function carvedHeroPillar(x,z,scale=1){
+  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+  const part=(geo,mat,y)=>{const m=new THREE.Mesh(geo,mat);m.position.y=y;g.add(m);return m;};
+  // stepped plinth
+  for(const [y,r,h] of [[.08,.70,.16],[.22,.59,.12],[.34,.50,.12],[.46,.43,.10]]) part(new THREE.CylinderGeometry(r*scale,r*scale,h*scale,8),MAT.sandstoneDark,y*scale);
+  // lathe-turned shaft with alternating drums
+  let y=.62;
+  for(let i=0;i<9;i++){const r=(i%3===1?.34:i%3===2?.29:.39)*scale;part(new THREE.CylinderGeometry(r,r,(i%2?.22:.28)*scale,16),i%2?MAT.sandstoneLight:MAT.sandstone,y*scale);y+=i%2?.22:.28;}
+  part(new THREE.CylinderGeometry(.34*scale,.29*scale,.62*scale,16),MAT.sandstone,2.82*scale);
+  // ornate capital + bracket silhouette
+  part(new THREE.CylinderGeometry(.48*scale,.33*scale,.20*scale,8),MAT.sandstoneLight,3.24*scale);
+  part(new THREE.BoxGeometry(1.04*scale,.16*scale,1.04*scale),MAT.sandstoneDark,3.42*scale);
+  part(new THREE.BoxGeometry(1.30*scale,.15*scale,.76*scale),MAT.sandstoneLight,3.58*scale);
+  for(const side of [-1,1]){const b=part(new THREE.BoxGeometry(.46*scale,.50*scale,.34*scale),MAT.sandstone,3.76*scale);b.position.x=side*.42*scale;b.rotation.z=side*.52;}
+  // floral bosses around the hero capital
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;const boss=new THREE.Mesh(new THREE.OctahedronGeometry(.105*scale,1),MAT.brass);boss.position.set(Math.cos(a)*.44*scale,3.38*scale,Math.sin(a)*.44*scale);g.add(boss);}
+  return g;
+}
+function ceilingMandala(x,z,scale=1){
+  const g=new THREE.Group();g.position.set(x,4.43,z);g.rotation.x=Math.PI/2;scene.add(g);
+  for(let ring=0;ring<4;ring++){const r=.28+ring*.27;const t=new THREE.Mesh(new THREE.TorusGeometry(r*scale,.045*scale,8,32),ring===2?MAT.brass:MAT.sandstoneLight);g.add(t);}
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;const p=new THREE.Mesh(new THREE.OctahedronGeometry(.10*scale,0),MAT.sandstoneLight);p.position.set(Math.cos(a)*.82*scale,Math.sin(a)*.82*scale,.03);p.rotation.z=a;g.add(p);}
+  const pendant=new THREE.Mesh(new THREE.ConeGeometry(.22*scale,.34*scale,12),MAT.brass);pendant.rotation.x=-Math.PI/2;pendant.position.z=.18*scale;g.add(pendant);
+}
+function carvedPortal(z){
+  // layered jambs and corbelled lintel around the circulation opening
+  for(const x of [-2.75,2.75]){
+    box(x,2.18,z,.24,4.18,.66,MAT.sandstoneDark);
+    box(x+(x<0?.20:-.20),2.18,z-.02,.12,3.82,.72,MAT.sandstoneLight);
+    for(const y of [.58,1.12,1.66,2.20,2.74,3.28]) box(x+(x<0?.31:-.31),y,z-.36,.10,.12,.18,MAT.brass);
+  }
+  for(let i=0;i<4;i++) box(0,3.72+i*.18,z,5.75-i*.48,.14,.62-i*.06,i===2?MAT.sandstoneLight:MAT.sandstoneDark);
+  ceilingMandala(0,z-.28,.56);
+}
+// Replace uniformity at focal points with genuinely denser hero bays.
+for(const p of [[-3.15,1.72],[3.15,1.72],[-3.15,-1.72],[3.15,-1.72]]) carvedHeroPillar(p[0],p[1],1.08);
+for(const z of [7.45,0,-9.35]) ceilingMandala(0,z,1.0);
+carvedPortal(4.02); carvedPortal(-4.92);
+
+// Stone bench / parapet rhythm along quieter walls, creating architectural depth without ornament everywhere.
+for(const x of [-6.55,6.55]){
+  for(const z of [9.55,6.25,-.55,-2.65,-8.35,-11.15]){
+    const seat=box(x,.47,z,1.45,.46,.62,MAT.sandstoneDark);
+    const back=box(x,.92,z,1.45,.70,.18,MAT.sandstone);
+    if(Math.abs(x)>0){seat.rotation.y=Math.PI/2;back.rotation.y=Math.PI/2;}
+  }
+}
+
+// Light and material pass: carved stone should read through grazing light, not flat colour.
+const stoneNoise=document.createElement('canvas');stoneNoise.width=stoneNoise.height=256;
+const sn=stoneNoise.getContext('2d');const img=sn.createImageData(256,256);
+for(let i=0;i<img.data.length;i+=4){const n=118+Math.floor((Math.random()-.5)*34);img.data[i]=n;img.data[i+1]=n-7;img.data[i+2]=n-15;img.data[i+3]=255;}
+sn.putImageData(img,0,0);
+const stoneMap=new THREE.CanvasTexture(stoneNoise);stoneMap.wrapS=stoneMap.wrapT=THREE.RepeatWrapping;stoneMap.repeat.set(5,5);
+for(const m of [MAT.sandstone,MAT.sandstoneDark,MAT.sandstoneLight]){m.roughnessMap=stoneMap;m.bumpMap=stoneMap;m.bumpScale=.035;m.needsUpdate=true;}
+
+function warmSpot(x,y,z,tx,ty,tz,intensity=26,distance=11,angle=.48){
+  const l=new THREE.SpotLight('#f0b96f',intensity,distance,angle,.58,1.7);
+  l.position.set(x,y,z);l.target.position.set(tx,ty,tz);scene.add(l,l.target);return l;
+}
+// Grazing light across capitals, portals and artworks.
+for(const [x,z,tx] of [[-6.6,9.5,-7.7],[6.6,8.0,7.7],[-6.4,.3,-7.7],[6.4,-1.2,7.7],[-6.5,-8.7,-7.7],[6.5,-10,7.7]])
+  warmSpot(x,3.95,z,tx,2.15,z,18,8,.42);
+warmSpot(-4.8,4.35,1.9,0,2.7,0,30,10,.55);warmSpot(4.8,4.35,-1.9,0,2.7,0,30,10,.55);
+
+// Jali lanterns: patterned luminous screens become landmarks in the darker bays.
+function luminousJali(x,y,z,rotY=0,scale=1){
+  const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;scene.add(g);
+  const glow=new THREE.MeshBasicMaterial({color:'#d6a45e',transparent:true,opacity:.17,toneMapped:false});
+  const panel=new THREE.Mesh(new THREE.PlaneGeometry(2.25*scale,2.8*scale),glow);panel.position.z=-.055;g.add(panel);
+  const stone=new THREE.MeshStandardMaterial({color:'#8b6e50',roughness:.9});
+  for(let i=-4;i<=4;i++){for(const sign of [-1,1]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.055*scale,3.15*scale,.10*scale),stone);bar.position.x=i*.27*scale;bar.rotation.z=sign*Math.PI/4;g.add(bar);}}
+  for(const yy of [-1.52,1.52]){const rail=new THREE.Mesh(new THREE.BoxGeometry(2.65*scale,.14*scale,.16*scale),MAT.sandstoneDark);rail.position.y=yy*scale;g.add(rail);}
+  const lamp=new THREE.PointLight('#d69a50',10,4.8,2);lamp.position.set(0,0,-.55);g.add(lamp);
+}
+luminousJali(-7.70,2.15,5.55,Math.PI/2,.82);luminousJali(7.70,2.15,2.65,-Math.PI/2,.82);
+luminousJali(-7.70,2.15,-7.15,Math.PI/2,.82);luminousJali(7.70,2.15,-11.65,-Math.PI/2,.82);
+
+// A singular carved ceiling centerpiece over the mandapa.
+const canopy=new THREE.Group();canopy.position.set(0,4.39,0);scene.add(canopy);
+for(let ring=0;ring<5;ring++){
+  const count=8+ring*4,r=.38+ring*.31;
+  for(let i=0;i<count;i++){const a=i*Math.PI*2/count;const petal=new THREE.Mesh(new THREE.OctahedronGeometry(.10+ring*.012,1),ring===1?MAT.brass:MAT.sandstoneLight);petal.position.set(Math.cos(a)*r,0,Math.sin(a)*r);petal.scale.set(.62,1.15,1.5);petal.rotation.y=-a;canopy.add(petal);}
+}
+const drop=new THREE.Mesh(new THREE.ConeGeometry(.22,.52,16),MAT.brass);drop.position.y=-.27;canopy.add(drop);
+
+// Spatial composition pass: break the inherited corridor into rooms with compression, reveal and level change.
+function stairRun(zStart,zEnd,width=5.4,rise=.11,steps=5){
+  const dz=(zEnd-zStart)/steps;
+  for(let i=0;i<steps;i++){const z=zStart+dz*(i+.5);box(0,rise*(i+1)/2,z,width,rise*(i+1),Math.abs(dz)+.03,MAT.sandstoneDark);}
+}
+// Raised ceremonial dais under the grand mandapa.
+box(0,.09,0,7.35,.18,5.65,MAT.sandstoneDark);
+box(0,.16,0,6.65,.14,4.95,MAT.sandstone);
+stairRun(3.35,2.72,5.2,.055,4); stairRun(-2.72,-3.35,5.2,.055,4);
+
+// Side aisles partially screen the central hall, creating glimpses before full reveal.
+for(const x of [-4.35,4.35]){
+  for(const z of [3.0,1.5,0,-1.5,-3.0]){
+    const screen=box(x,1.72,z,.20,3.15,.95,MAT.sandstoneDark);
+    screen.rotation.y=(x<0?-.10:.10);
+  }
+}
+// Low parapets funnel the visitor toward the mandapa, then release into its full width.
+for(const x of [-3.8,3.8]){
+  box(x,.58,4.9,.34,1.12,2.0,MAT.sandstone);
+  box(x,.58,-5.8,.34,1.12,1.7,MAT.sandstone);
+}
+
+// Two offset thresholds prevent seeing the entire archive from the entrance.
+box(-5.85,2.18,5.25,4.1,4.36,.32,MAT.sandstoneDark);
+box(5.85,2.18,5.25,4.1,4.36,.32,MAT.sandstoneDark);
+box(-5.15,2.18,-5.95,5.3,4.36,.32,MAT.sandstoneDark);
+box(6.15,2.18,-5.95,3.3,4.36,.32,MAT.sandstoneDark);
+
+// Framed sightlines: freestanding portals reveal project bays before the visitor reaches them.
+function sightPortal(x,z,rotY=0){
+  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rotY;scene.add(g);
+  for(const sx of [-1.18,1.18]){const jamb=new THREE.Mesh(new THREE.BoxGeometry(.26,3.55,.42),MAT.sandstone);jamb.position.set(sx,1.78,0);g.add(jamb);}
+  const lintel=new THREE.Mesh(new THREE.BoxGeometry(2.8,.28,.48),MAT.sandstoneDark);lintel.position.y=3.52;g.add(lintel);
+  const crown=new THREE.Mesh(new THREE.BoxGeometry(2.28,.13,.55),MAT.sandstoneLight);crown.position.y=3.74;g.add(crown);
+}
+sightPortal(-3.95,8.25,Math.PI/2); sightPortal(3.95,-8.9,-Math.PI/2);
+
+// Small sunken pause court before the final approach: darker, quieter, then compression into Room VII.
+box(0,-.15,-12.95,6.8,.14,2.1,MAT.room3Floor);
+for(const x of [-3.55,3.55]) box(x,.42,-12.95,.42,.84,2.1,MAT.sandstoneDark);
+const pauseRing=new THREE.Mesh(new THREE.RingGeometry(1.15,1.23,40),MAT.brass);pauseRing.rotation.x=-Math.PI/2;pauseRing.position.set(0,-.065,-12.95);scene.add(pauseRing);
+
+// Taller visual canopy above the mandapa: dark void + suspended beams makes it feel larger than the side galleries.
+box(0,5.62,0,10.8,.10,7.2,MAT.room1Ceiling);
+for(const z of [-3,-1.5,0,1.5,3]) box(0,5.35,z,10.4,.18,.24,MAT.sandstoneDark);
+for(const x of [-4.7,-2.35,0,2.35,4.7]) box(x,5.18,0,.18,.18,6.5,MAT.sandstoneLight);
+const highGlow=new THREE.PointLight('#e3ad69',16,11,2);highGlow.position.set(0,5.15,0);scene.add(highGlow);
+
+// Realism pass: physically plausible renderer, aged stone variation, contact shadows and dust.
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMappingExposure = .94;
+sun.castShadow = true; sun.intensity = 1.05;
+sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-12;sun.shadow.camera.right=12;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-18;
+sun.shadow.bias=-.00025;
+
+// Reusable stone variants prevent the entire building reading as one CG material.
+function stoneVariant(base,rough=.93){
+  const m=new THREE.MeshStandardMaterial({color:base,roughness:rough,metalness:0,roughnessMap:stoneMap,bumpMap:stoneMap,bumpScale:.045});
+  return m;
+}
+const agedStone=[stoneVariant('#7d6249'),stoneVariant('#927459'),stoneVariant('#705744'),stoneVariant('#a18464')];
+scene.traverse(o=>{
+  if(!o.isMesh)return;
+  if([MAT.sandstone,MAT.sandstoneDark,MAT.sandstoneLight].includes(o.material) && Math.random()<.34) o.material=agedStone[Math.floor(Math.random()*agedStone.length)];
+  if(o.geometry?.type!=='PlaneGeometry'){o.castShadow=true;o.receiveShadow=true;}
+});
+
+// Soft fake contact shadows under pillars/plinths add grounding without expensive AO postprocessing.
+const contactMat=new THREE.MeshBasicMaterial({color:'#090705',transparent:true,opacity:.22,depthWrite:false});
+function contactShadow(x,z,sx=.8,sz=.8){
+  const m=new THREE.Mesh(new THREE.CircleGeometry(1,24),contactMat);m.scale.set(sx,sz,1);m.rotation.x=-Math.PI/2;m.position.set(x,.012,z);scene.add(m);
+}
+for(const z of [11.8,9.25,6.7,2.55,0,-2.55,-7.15,-9.7,-12.25]){contactShadow(-5.35,z,.72,.58);contactShadow(5.35,z,.72,.58);}
+for(const p of [[-3.15,1.72],[3.15,1.72],[-3.15,-1.72],[3.15,-1.72]]) contactShadow(p[0],p[1],.9,.75);
+
+// Imperfect floor slabs and seams make the ground read as constructed stone rather than one giant plane.
+for(const z of [11.2,9.1,7,2.7,.55,-1.6,-7.1,-9.25,-11.4]){
+  box(0,.018,z,10.1,.018,.022,new THREE.MeshBasicMaterial({color:'#32271e',transparent:true,opacity:.42}));
+}
+for(const x of [-4.6,-2.3,2.3,4.6]){
+  box(x,.019,-.4,.018,.02,26,new THREE.MeshBasicMaterial({color:'#2b211a',transparent:true,opacity:.28}));
+}
+
+// Dust motes visible only when they cross the warm light volumes.
+const dustGeo=new THREE.BufferGeometry();const dustCount=360;const pos=new Float32Array(dustCount*3);
+for(let i=0;i<dustCount;i++){pos[i*3]=(Math.random()-.5)*14;pos[i*3+1]=.3+Math.random()*5.2;pos[i*3+2]=13-Math.random()*34;}
+dustGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#d9b987',size:.018,transparent:true,opacity:.28,depthWrite:false}));scene.add(dust);
+
+// Slight warm pools at floor level emulate bounced light from sandstone.
+for(const z of [8.1,0,-9.2,-18.2]){
+ const bounce=new THREE.PointLight('#b66f38',z===-18.2?8:4.5,5.5,2);bounce.position.set(0,.45,z);scene.add(bounce);
+}
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
@@ -189,8 +503,8 @@ manager.onProgress = (_, loaded, total) => {
 manager.onLoad = () => {
   texturesReady = true;
   ui.enterButton.disabled = false;
-  ui.enterLabel.textContent = 'ENTER 3D ARCHIVE';
-  ui.loadingNote.textContent = '3D archive ready. Or skip straight to the project list.';
+  ui.enterLabel.textContent = 'ENTER EXHIBITION';
+  ui.loadingNote.textContent = 'Exhibition ready. Or open the index.';
 };
 
 const textureLoader = new THREE.TextureLoader(manager);
@@ -255,8 +569,8 @@ function makeContactTexture() {
   const c = document.createElement('canvas'); c.width = 1600; c.height = 850;
   const x = c.getContext('2d');
   x.fillStyle = '#11110f'; x.fillRect(0,0,c.width,c.height);
-  x.fillStyle = '#817c72'; x.font = '30px monospace'; x.fillText('END OF ARCHIVE', 110, 110);
-  x.fillStyle = '#eee9df'; x.font = '500 94px Georgia'; x.fillText('Have something', 110, 330); x.fillText('worth building?', 110, 440);
+  x.fillStyle = '#817c72'; x.font = '30px monospace'; x.fillText('ROOM VII / UNASSIGNED', 110, 110);
+  x.fillStyle = '#eee9df'; x.font = '700 108px Arial'; x.fillText('YOURS COULD BE', 110, 330); x.fillText('ROOM VII.', 110, 455);
   x.fillStyle = '#c8c1b6'; x.font = '28px monospace'; x.fillText('START A PROJECT  ↗', 110, 625);
   x.fillStyle = '#4a4741'; x.fillRect(110, 654, 360, 2);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
@@ -265,14 +579,14 @@ const contactArt = new THREE.Mesh(
   new THREE.PlaneGeometry(7.5, 3.95),
   new THREE.MeshBasicMaterial({ map: makeContactTexture(), toneMapped: false })
 );
-contactArt.position.set(0, 2.25, -14.42);
+contactArt.position.set(0, 3.65, -21.02);
 contactArt.userData = { type: 'contact' };
 scene.add(contactArt); interactables.push(contactArt);
 
 function roomTitleTexture(top, bottom) {
   const c = document.createElement('canvas'); c.width=1100; c.height=220; const x=c.getContext('2d');
   x.fillStyle='#d1c7ba'; x.font='34px monospace'; x.fillText(top,20,62);
-  x.fillStyle='#f0eade'; x.font='italic 88px Georgia'; x.fillText(bottom,20,164);
+  x.fillStyle='#f0eade'; x.font='700 78px Arial'; x.fillText(bottom.toUpperCase(),20,164);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
 }
 for (const [z,top,bottom] of [[12.8,'ROOM I','INTERIORS'],[3.15,'ROOM II','TRANSFORMATIONS'],[-5.85,'ROOM III','OCCASIONS']]) {
@@ -375,7 +689,7 @@ ui.enterButton.addEventListener('click', () => {
 });
 
 const blockers = [
-  [-8.7,-7.96,-15,14], [7.96,8.7,-15,14], [-8.7,8.7,13.45,14.1], [-8.7,8.7,-15.1,-14.46],
+  [-8.7,-7.96,-15,14], [7.96,8.7,-15,14], [-8.7,8.7,13.45,14.1], [-8.1,-7.2,-21.6,-14.46], [7.2,8.1,-21.6,-14.46], [-8.1,8.1,-21.6,-21.25],
   [-8.6,-2.72,3.86,4.25], [2.72,8.6,3.86,4.25],
   [-8.6,-2.72,-5.13,-4.75], [2.72,8.6,-5.13,-4.75]
 ];
@@ -442,10 +756,10 @@ interactHint.className = 'interact-hint'; interactHint.textContent='VIEW PROJECT
 // --- animation loop -------------------------------------------------------
 let activeRoom = 1;
 function updateRoomIndicator(z) {
-  const room = z > 4.05 ? 1 : z > -4.95 ? 2 : 3;
+  const room = z > 4.05 ? 1 : z > -4.95 ? 2 : z > -14.5 ? 3 : 4;
   if (room === activeRoom) return;
   activeRoom = room;
-  const meta = room === 1 ? ['ROOM I','INTERIORS','33.33%'] : room === 2 ? ['ROOM II','TRANSFORMATIONS','66.66%'] : ['ROOM III','OCCASIONS','100%'];
+  const meta = room === 1 ? ['ROOM I','INTERIORS','25%'] : room === 2 ? ['ROOM II','TRANSFORMATIONS','50%'] : room === 3 ? ['ROOM III','OCCASIONS','75%'] : ['ROOM VII','UNASSIGNED','100%'];
   ui.roomNumber.textContent = meta[0]; ui.roomName.textContent = meta[1]; ui.roomProgress.style.width = meta[2];
 }
 const clock = new THREE.Clock();
@@ -488,6 +802,8 @@ function animate() {
     interactHint.classList.remove('show');
   }
 
+  dust.rotation.y += dt * .006;
+  dust.position.y = Math.sin(performance.now()*.00018)*.035;
   renderer.render(scene,camera);
   requestAnimationFrame(animate);
 }
