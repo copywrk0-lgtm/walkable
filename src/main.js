@@ -239,6 +239,48 @@ for(const z of [7.4,-.7,-9.4]) {
   const core=new THREE.Mesh(new THREE.CircleGeometry(.62,32),MAT.sandstoneDark);core.rotation.x=-Math.PI/2;core.position.set(0,.018,z);scene.add(core);
 }
 
+// Architectural hierarchy: ceremonial court, grand mandapa and carved wall rhythm.
+function lotusRosette(x,y,z,scale=1) {
+  const g=new THREE.Group(); g.position.set(x,y,z); scene.add(g);
+  const center=new THREE.Mesh(new THREE.CylinderGeometry(.17*scale,.17*scale,.07*scale,16),MAT.brass);
+  center.rotation.x=Math.PI/2; g.add(center);
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4;
+    const petal=new THREE.Mesh(new THREE.SphereGeometry(.16*scale,8,6),MAT.sandstoneLight);
+    petal.scale.set(.55,1.35,.25); petal.position.set(Math.cos(a)*.31*scale,Math.sin(a)*.31*scale,0);
+    petal.rotation.z=a-Math.PI/2; g.add(petal);
+  }
+}
+function jaliPanel(x,y,z,rotY=0) {
+  const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.y=rotY; scene.add(g);
+  for(let i=-3;i<=3;i++){
+    const a=new THREE.Mesh(new THREE.BoxGeometry(.055,2.25,.08),MAT.sandstoneLight);
+    a.position.x=i*.32; a.rotation.z=Math.PI/4; g.add(a);
+    const b=a.clone(); b.rotation.z=-Math.PI/4; g.add(b);
+  }
+  for(const yy of [-1.18,1.18]){const rail=new THREE.Mesh(new THREE.BoxGeometry(2.5,.12,.14),MAT.sandstoneDark);rail.position.y=yy;g.add(rail);}
+}
+// Broad entrance court.
+for(const x of [-6.65,-3.35,3.35,6.65]) templePillar(x,12.7,1.08);
+box(0,4.12,12.7,14.4,.28,.58,MAT.sandstoneDark);
+box(0,4.36,12.7,12.7,.16,.46,MAT.sandstoneLight);
+lotusRosette(0,3.93,12.38,1.18);
+jaliPanel(-7.72,2.2,11.5,Math.PI/2); jaliPanel(7.72,2.2,10.6,-Math.PI/2);
+
+// Grand mandapa: heavier pillars and a layered ceiling canopy at the centre.
+for(const p of [[-3.15,1.72],[3.15,1.72],[-3.15,-1.72],[3.15,-1.72]]) templePillar(p[0],p[1],1.16);
+box(0,4.16,1.72,7.2,.30,.46,MAT.sandstoneDark); box(0,4.16,-1.72,7.2,.30,.46,MAT.sandstoneDark);
+for(let layer=0;layer<3;layer++){const slab=box(0,4.34+layer*.12,0,5-layer*.7,.10,5-layer*.7,MAT.sandstoneDark);slab.rotation.y=layer*Math.PI/12;}
+lotusRosette(0,4.18,0,1.48);
+
+// Repeated shallow reliefs and rosettes keep the walls from reading as flat game boxes.
+for(const z of [10.55,5.7,2.85,-2.85,-7.05,-11.55]){
+  for(const x of [-7.93,7.93]){
+    box(x,2.55,z,.16,2.7,1.28,MAT.sandstoneDark);
+    for(const yy of [1.55,2.12,2.69,3.26]) box(x+(x<0?.10:-.10),yy,z,.08,.08,1.05,MAT.sandstoneLight);
+  }
+}
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
