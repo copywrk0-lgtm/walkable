@@ -134,7 +134,11 @@ const MAT = {
   plinth1: new THREE.MeshStandardMaterial({ color: '#5b5144', roughness: 0.86 }),
   plinth2: new THREE.MeshStandardMaterial({ color: '#c2bdb4', roughness: 0.86 }),
   plinth3: new THREE.MeshStandardMaterial({ color: '#343d32', roughness: 0.86 }),
-  dark: new THREE.MeshStandardMaterial({ color: '#090a08', roughness: 0.9 })
+  dark: new THREE.MeshStandardMaterial({ color: '#090a08', roughness: 0.9 }),
+  sandstone: new THREE.MeshStandardMaterial({ color: '#8f7255', roughness: 0.94, metalness: 0.0 }),
+  sandstoneDark: new THREE.MeshStandardMaterial({ color: '#5d4937', roughness: 0.98 }),
+  sandstoneLight: new THREE.MeshStandardMaterial({ color: '#b39876', roughness: 0.92 }),
+  brass: new THREE.MeshStandardMaterial({ color: '#8c6b35', roughness: 0.58, metalness: 0.28 })
 };
 
 function box(x, y, z, sx, sy, sz, material = MAT.room1Wall, cast = false) {
@@ -166,6 +170,73 @@ box(5.4, 2.25, -14.72, 5.8, 4.5, 0.5, MAT.room3Wall);
 for (const [z,mat] of [[4.05,MAT.room1Wall],[-4.95,MAT.room3Wall]]) {
   box(-5.55, 2.25, z, 5.4, 4.5, 0.35, mat);
   box(5.55, 2.25, z, 5.4, 4.5, 0.35, mat);
+}
+
+// --- temple-castle architecture -------------------------------------------
+// A stylised Indian stone mandapa rather than a generic white-box gallery.
+// The geometry stays procedural/lightweight so the exhibition still runs on phones.
+function cylinder(radiusTop, radiusBottom, height, segments, material) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments), material);
+  scene.add(m); return m;
+}
+function torus(x,y,z,r,tube,rotX,rotY,material,arc=Math.PI) {
+  const m=new THREE.Mesh(new THREE.TorusGeometry(r,tube,8,32,arc),material);
+  m.position.set(x,y,z); m.rotation.set(rotX,rotY,0); scene.add(m); return m;
+}
+function templePillar(x,z,scale=1) {
+  const g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
+  const add=(geo,mat,y)=>{const m=new THREE.Mesh(geo,mat);m.position.y=y;g.add(m);return m;};
+  add(new THREE.CylinderGeometry(.48*scale,.58*scale,.20*scale,8),MAT.sandstoneDark,.10*scale);
+  add(new THREE.CylinderGeometry(.40*scale,.48*scale,.18*scale,8),MAT.sandstoneLight,.29*scale);
+  add(new THREE.CylinderGeometry(.29*scale,.34*scale,2.72*scale,12),MAT.sandstone,1.74*scale);
+  // carved-looking shaft bands
+  for(const y of [.55,1.02,2.38,2.76]) add(new THREE.CylinderGeometry(.38*scale,.38*scale,.09*scale,12),MAT.sandstoneLight,y*scale);
+  // stepped floral/corbel capital
+  add(new THREE.CylinderGeometry(.46*scale,.32*scale,.22*scale,8),MAT.sandstoneLight,3.18*scale);
+  add(new THREE.BoxGeometry(.92*scale,.16*scale,.92*scale),MAT.sandstoneDark,3.38*scale);
+  add(new THREE.BoxGeometry(1.16*scale,.14*scale,.66*scale),MAT.sandstoneLight,3.53*scale);
+  // small diamond bosses read like hand-carved ornament at walking distance
+  for(let i=0;i<4;i++){const b=add(new THREE.OctahedronGeometry(.11*scale,0),MAT.sandstoneLight,(1.22+i*.42)*scale);b.position.x=.29*scale;b.rotation.z=Math.PI/4;}
+  return g;
+}
+// Colonnade: repeated stone pillars make the long archive read as a palace/temple hall.
+for(const z of [11.8,9.25,6.7,2.55,0,-2.55,-7.15,-9.7,-12.25]) {
+  templePillar(-5.35,z,.98); templePillar(5.35,z,.98);
+}
+// Stone beams and layered cornices bind the columns together.
+for(const x of [-5.35,5.35]) {
+  box(x,3.62,-.45,.72,.22,27.2,MAT.sandstoneDark);
+  box(x,3.80,-.45,.96,.12,27.2,MAT.sandstoneLight);
+  box(x,4.00,-.45,.62,.18,27.2,MAT.sandstone);
+}
+// Decorative transverse beams create a coffered, ceremonial ceiling rhythm.
+for(const z of [11.8,9.25,6.7,4.05,2.55,0,-2.55,-4.95,-7.15,-9.7,-12.25]) {
+  box(0,4.02,z,11.3,.18,.30,MAT.sandstoneDark);
+  for(const x of [-3.9,-1.3,1.3,3.9]) {
+    const boss=cylinder(.16,.16,.10,12,MAT.brass); boss.position.set(x,3.88,z); boss.rotation.x=Math.PI/2;
+  }
+}
+// Torana-like gateways at the room transitions: stepped lintel, brackets and a central crest.
+for(const z of [4.05,-4.95]) {
+  box(-2.42,3.18,z,.48,2.15,.55,MAT.sandstone);
+  box(2.42,3.18,z,.48,2.15,.55,MAT.sandstone);
+  box(0,4.02,z,5.35,.26,.62,MAT.sandstoneDark);
+  box(0,4.27,z,4.55,.18,.48,MAT.sandstoneLight);
+  const crest=new THREE.Mesh(new THREE.OctahedronGeometry(.34,0),MAT.brass);crest.position.set(0,4.18,z-.34);crest.rotation.z=Math.PI/4;scene.add(crest);
+  for(const x of [-1.85,1.85]){const b=box(x,3.70,z,.72,.52,.68,MAT.sandstoneLight);b.rotation.z=x<0?-.18:.18;}
+}
+// Recessed shrine-like frames behind every artwork, so the websites feel installed in stone niches.
+for(const [x,z,rot] of [[-7.72,8.1,Math.PI/2],[7.72,7.15,-Math.PI/2],[-7.72,-.35,Math.PI/2],[7.72,-1,-Math.PI/2],[-7.72,-9,Math.PI/2],[7.72,-9.75,-Math.PI/2]]) {
+  const g=new THREE.Group();g.position.set(x,2.22,z);g.rotation.y=rot;scene.add(g);
+  const back=new THREE.Mesh(new THREE.BoxGeometry(4.25,3.12,.18),MAT.sandstoneDark);back.position.z=-.22;g.add(back);
+  const top=new THREE.Mesh(new THREE.BoxGeometry(4.55,.20,.42),MAT.sandstoneLight);top.position.set(0,1.67,-.13);g.add(top);
+  for(const sx of [-2.12,2.12]){const side=new THREE.Mesh(new THREE.BoxGeometry(.20,3.18,.42),MAT.sandstoneLight);side.position.set(sx,0,-.13);g.add(side);}
+  for(const sx of [-1.65,-.82,0,.82,1.65]){const bead=new THREE.Mesh(new THREE.OctahedronGeometry(.095,0),MAT.brass);bead.position.set(sx,1.67,.11);g.add(bead);}
+}
+// Central floor inlay: restrained brass/stone medallions, not a theme-park texture.
+for(const z of [7.4,-.7,-9.4]) {
+  const ring=torus(0,.025,z,.92,.035,Math.PI/2,0,MAT.brass,Math.PI*2);
+  const core=new THREE.Mesh(new THREE.CircleGeometry(.62,32),MAT.sandstoneDark);core.rotation.x=-Math.PI/2;core.position.set(0,.018,z);scene.add(core);
 }
 
 // sculptural wayfinding objects change material with each room
