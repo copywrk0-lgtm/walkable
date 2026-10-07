@@ -3,40 +3,40 @@ import './style.css';
 
 const projects = [
   {
-    id: 'pakeezah', index: '01', title: 'Pakeezah Atelier', category: 'INTERIOR / PORTFOLIO', room: 'ROOM I — INTERIORS', image: '/art/pakeezah.jpg',
+    id: 'pakeezah', index: '01', title: 'Pakeezah Atelier', category: 'INTERIOR / PORTFOLIO', room: 'ROOM I — INTERIORS', image: '/art/pakeezah.webp',
     blurb: 'A quiet portfolio that moves from design intent to the reality of the site.',
     detail: 'Editorial pacing, site-to-finish storytelling and a WhatsApp-first enquiry path.',
-    href: 'https://pakeezahatelier.vercel.app/'
+    href: 'https://pakeezahatelier.vercel.app/', linkLabel: 'SEE THE EDITORIAL PROJECT FLOW ↗'
   },
   {
-    id: 'trove', index: '02', title: 'The Design Trove', category: 'INTERIOR / CONCEPT', room: 'ROOM I — INTERIORS', image: '/art/trove.jpg',
+    id: 'trove', index: '02', title: 'The Design Trove', category: 'INTERIOR / CONCEPT', room: 'ROOM I — INTERIORS', image: '/art/trove.webp',
     blurb: 'A concept built around the distance between a brief and a finished home.',
     detail: 'Horizontal moments, restrained transitions and a project-led narrative.',
-    href: 'https://thedesigntrove.vercel.app/'
+    href: 'https://thedesigntrove.vercel.app/', linkLabel: 'SEE THE BRIEF-TO-HOME STORY ↗'
   },
   {
-    id: 'regnant', index: '03', title: 'Regnant', category: 'INTERIOR / BEFORE → AFTER', room: 'ROOM II — TRANSFORMATIONS', image: '/art/regnant.jpg',
+    id: 'regnant', index: '03', title: 'Regnant', category: 'INTERIOR / BEFORE → AFTER', room: 'ROOM II — TRANSFORMATIONS', image: '/art/regnant.webp',
     blurb: 'A visual before-and-after portfolio for showing execution, not just outcomes.',
     detail: 'Construction-to-finished comparisons, project captions and a concise brief flow.',
-    href: 'https://regnant-beta.vercel.app/'
+    href: 'https://regnant-beta.vercel.app/', linkLabel: 'SEE THE BEFORE / AFTER SYSTEM ↗'
   },
   {
-    id: 'still', index: '04', title: 'Still Skincare', category: 'BEAUTY / CONCEPT', room: 'ROOM II — TRANSFORMATIONS', image: '/art/still.jpg',
+    id: 'still', index: '04', title: 'Still Skincare', category: 'BEAUTY / CONCEPT', room: 'ROOM II — TRANSFORMATIONS', image: '/art/still.webp',
     blurb: 'A skincare story built around one idea: lock the age you are in.',
     detail: 'A scroll-led brand journey from concern → science → treatment → consultation.',
-    href: 'https://stillskincare.vercel.app/'
+    href: 'https://stillskincare.vercel.app/', linkLabel: 'SEE THE SCROLL-LED BRAND STORY ↗'
   },
   {
-    id: 'everafter', index: '05', title: 'Ever After', category: 'WEDDING / EDITORIAL', room: 'ROOM III — OCCASIONS', image: '/art/everafter.jpg',
+    id: 'everafter', index: '05', title: 'Ever After', category: 'WEDDING / EDITORIAL', room: 'ROOM III — OCCASIONS', image: '/art/everafter.webp',
     blurb: 'An editorial wedding experience designed to feel closer to a magazine than a template.',
     detail: 'Deep tones, full-frame imagery and a clear route from atmosphere to enquiry.',
-    href: ''
+    href: 'https://everafterweddings-five.vercel.app/', linkLabel: 'SEE THE EDITORIAL WEDDING EXPERIENCE ↗'
   },
   {
-    id: 'archive35', index: '06', title: '35mm Archive', category: 'EXPERIMENTAL / CAMERA', room: 'ROOM III — OCCASIONS', image: '/art/archive35.jpg',
+    id: 'archive35', index: '06', title: '35mm Archive', category: 'EXPERIMENTAL / CAMERA', room: 'ROOM III — OCCASIONS', image: '/art/archive35.webp',
     blurb: 'A tactile film-camera experiment built as a digital object rather than a normal page.',
     detail: 'Tape, contact sheets, film-strip movement and a physical-feeling visual system.',
-    href: ''
+    href: '', linkLabel: 'EXPERIMENTAL STUDY · PRIVATE BUILD'
   }
 ];
 
@@ -47,7 +47,11 @@ const ui = {
   enterLabel: document.querySelector('#enterLabel'),
   hud: document.querySelector('#hud'),
   crosshair: document.querySelector('#crosshair'),
-  desktopHint: document.querySelector('#desktopHint'),
+  firstHint: document.querySelector('#firstHint'),
+  loadingNote: document.querySelector('#loadingNote'),
+  roomNumber: document.querySelector('#roomNumber'),
+  roomName: document.querySelector('#roomName'),
+  roomProgress: document.querySelector('#roomProgress'),
   mobileControls: document.querySelector('#mobileControls'),
   joystick: document.querySelector('#joystick'),
   knob: document.querySelector('#knob'),
@@ -68,87 +72,110 @@ const ui = {
 };
 
 // --- renderer / scene ------------------------------------------------------
+function canUseWebGL() {
+  try {
+    const probe = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (probe.getContext('webgl2') || probe.getContext('webgl')));
+  } catch { return false; }
+}
+if (!canUseWebGL()) {
+  ui.loadingNote.textContent = '3D is not available on this device. Opening the fast project list.';
+  location.hash = 'projects';
+  throw new Error('WebGL unavailable — using HTML portfolio fallback.');
+}
+
 const renderer = new THREE.WebGLRenderer({ canvas: ui.canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.65));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = false;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.18;
+renderer.toneMappingExposure = 1.08;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#bdb6a8');
-scene.fog = new THREE.Fog('#bdb6a8', 16, 34);
+scene.background = new THREE.Color('#11130f');
+scene.fog = new THREE.Fog('#11130f', 14, 34);
 
 const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 55);
 camera.position.set(0, 1.65, 11.2);
 camera.rotation.order = 'YXZ';
 
-scene.add(new THREE.HemisphereLight('#e6ded0', '#756f66', 1.65));
-const sun = new THREE.DirectionalLight('#fff0d2', 2.7);
-sun.position.set(5.5, 11, 8);
-sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
-sun.shadow.camera.left = -12;
-sun.shadow.camera.right = 12;
-sun.shadow.camera.top = 18;
-sun.shadow.camera.bottom = -18;
+scene.add(new THREE.HemisphereLight('#cbbdaa', '#070807', 0.58));
+const sun = new THREE.DirectionalLight('#f4dfc0', 0.62);
+sun.position.set(4, 10, 8);
 scene.add(sun);
 
-function addPointLight(x, z, intensity = 24) {
-  const l = new THREE.PointLight('#ffddb0', intensity, 9, 2);
-  l.position.set(x, 3.85, z);
+function addPointLight(x, z, color, intensity = 12, distance = 7) {
+  const l = new THREE.PointLight(color, intensity, distance, 2);
+  l.position.set(x, 3.7, z);
   scene.add(l);
 }
-addPointLight(-5.7, 8.2, 20);
-addPointLight(5.7, 6.6, 19);
-addPointLight(-5.7, -0.7, 18);
-addPointLight(5.7, -1.2, 17);
-addPointLight(-5.7, -9.0, 18);
-addPointLight(5.7, -9.8, 18);
+// Room I — warm gallery
+addPointLight(-5.8, 8.2, '#e3a866', 18, 7.2);
+addPointLight(5.8, 7.0, '#ffd0a0', 17, 7.2);
+// Room II — cooler transformation room
+addPointLight(-5.8, -0.4, '#e7ded1', 15, 7.4);
+addPointLight(5.8, -1.0, '#d7c6be', 14, 7.4);
+// Room III — darker olive / occasion room
+addPointLight(-5.8, -9.0, '#ba9d76', 14, 7.0);
+addPointLight(5.8, -9.8, '#a9b39c', 11, 7.0);
 
 const MAT = {
-  wall: new THREE.MeshStandardMaterial({ color: '#e5dfd4', roughness: 0.92 }),
-  floor: new THREE.MeshStandardMaterial({ color: '#aaa295', roughness: 0.89 }),
-  ceiling: new THREE.MeshStandardMaterial({ color: '#d8d2c7', roughness: 1, side: THREE.DoubleSide }),
-  frame: new THREE.MeshStandardMaterial({ color: '#141310', roughness: 0.52 }),
-  plinth: new THREE.MeshStandardMaterial({ color: '#c1b9ad', roughness: 0.82 }),
-  dark: new THREE.MeshStandardMaterial({ color: '#11110f', roughness: 0.86 })
+  room1Wall: new THREE.MeshStandardMaterial({ color: '#282620', roughness: 0.96 }),
+  room1Floor: new THREE.MeshStandardMaterial({ color: '#171815', roughness: 0.9 }),
+  room1Ceiling: new THREE.MeshStandardMaterial({ color: '#1d1e1a', roughness: 1, side: THREE.DoubleSide }),
+  room2Wall: new THREE.MeshStandardMaterial({ color: '#aaa69d', roughness: 0.94 }),
+  room2Floor: new THREE.MeshStandardMaterial({ color: '#5f5b55', roughness: 0.88 }),
+  room2Ceiling: new THREE.MeshStandardMaterial({ color: '#8c8982', roughness: 1, side: THREE.DoubleSide }),
+  room3Wall: new THREE.MeshStandardMaterial({ color: '#1a211a', roughness: 0.96 }),
+  room3Floor: new THREE.MeshStandardMaterial({ color: '#0e120e', roughness: 0.9 }),
+  room3Ceiling: new THREE.MeshStandardMaterial({ color: '#111611', roughness: 1, side: THREE.DoubleSide }),
+  frame: new THREE.MeshStandardMaterial({ color: '#090a08', roughness: 0.58 }),
+  plinth1: new THREE.MeshStandardMaterial({ color: '#5b5144', roughness: 0.86 }),
+  plinth2: new THREE.MeshStandardMaterial({ color: '#c2bdb4', roughness: 0.86 }),
+  plinth3: new THREE.MeshStandardMaterial({ color: '#343d32', roughness: 0.86 }),
+  dark: new THREE.MeshStandardMaterial({ color: '#090a08', roughness: 0.9 })
 };
 
-function box(x, y, z, sx, sy, sz, material = MAT.wall, cast = true) {
+function box(x, y, z, sx, sy, sz, material = MAT.room1Wall, cast = false) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
   m.position.set(x, y, z);
-  m.castShadow = cast;
-  m.receiveShadow = true;
+  m.castShadow = false;
+  m.receiveShadow = false;
   scene.add(m);
   return m;
 }
 
-// floor / ceiling / outer shell
-box(0, -0.08, -0.5, 17, 0.16, 29, MAT.floor, false);
-box(0, 4.61, -0.5, 17, 0.12, 29, MAT.ceiling, false);
-box(-8.25, 2.25, -0.5, 0.5, 4.5, 29);
-box(8.25, 2.25, -0.5, 0.5, 4.5, 29);
-box(0, 2.25, 13.72, 17, 4.5, 0.5);
-box(-5.4, 2.25, -14.72, 5.8, 4.5, 0.5);
-box(5.4, 2.25, -14.72, 5.8, 4.5, 0.5);
+// Three materially distinct rooms. Lighting is intentionally baked-looking: no runtime shadows.
+const rooms = [
+  { z: 8.88, len: 9.28, wall: MAT.room1Wall, floor: MAT.room1Floor, ceiling: MAT.room1Ceiling },
+  { z: -0.45, len: 8.66, wall: MAT.room2Wall, floor: MAT.room2Floor, ceiling: MAT.room2Ceiling },
+  { z: -9.82, len: 9.34, wall: MAT.room3Wall, floor: MAT.room3Floor, ceiling: MAT.room3Ceiling }
+];
+for (const r of rooms) {
+  box(0, -0.08, r.z, 17, 0.16, r.len, r.floor, false);
+  box(0, 4.61, r.z, 17, 0.12, r.len, r.ceiling, false);
+  box(-8.25, 2.25, r.z, 0.5, 4.5, r.len, r.wall);
+  box(8.25, 2.25, r.z, 0.5, 4.5, r.len, r.wall);
+}
+box(0, 2.25, 13.72, 17, 4.5, 0.5, MAT.room1Wall);
+box(-5.4, 2.25, -14.72, 5.8, 4.5, 0.5, MAT.room3Wall);
+box(5.4, 2.25, -14.72, 5.8, 4.5, 0.5, MAT.room3Wall);
 
-// partitions with central openings
-for (const z of [4.05, -4.95]) {
-  box(-5.55, 2.25, z, 5.4, 4.5, 0.35);
-  box(5.55, 2.25, z, 5.4, 4.5, 0.35);
+// partitions with generous central openings
+for (const [z,mat] of [[4.05,MAT.room1Wall],[-4.95,MAT.room3Wall]]) {
+  box(-5.55, 2.25, z, 5.4, 4.5, 0.35, mat);
+  box(5.55, 2.25, z, 5.4, 4.5, 0.35, mat);
 }
 
-// sculptural objects / wayfinding
-box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth);
-box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth);
-box(0, 0.30, -9.4, 1.5, 0.6, 1.5, MAT.plinth);
+// sculptural wayfinding objects change material with each room
+box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
+box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
+box(0, 0.30, -9.4, 1.5, 0.6, 1.5, MAT.plinth3);
 
-// ceiling light strips
-for (const z of [9.5, 6.3, 0.8, -2.2, -8.0, -11.0]) {
-  const strip = box(0, 4.49, z, 3.4, 0.04, 0.10, new THREE.MeshBasicMaterial({ color: '#fff4df' }), false);
+// low-cost emissive ceiling strips; different temperatures signal progression
+for (const [z,color] of [[9.5,'#f2c999'],[6.3,'#e5a969'],[0.8,'#f4eee5'],[-2.2,'#d9cec7'],[-8.0,'#b9a07c'],[-11.0,'#9ca995']]) {
+  const strip = box(0, 4.49, z, 3.4, 0.04, 0.10, new THREE.MeshBasicMaterial({ color }), false);
   strip.material.toneMapped = false;
 }
 
@@ -157,12 +184,13 @@ const manager = new THREE.LoadingManager();
 let texturesReady = false;
 manager.onProgress = (_, loaded, total) => {
   const pct = Math.min(99, Math.round((loaded / Math.max(total, 1)) * 100));
-  ui.enterLabel.textContent = `LOADING ${String(pct).padStart(2, '0')}%`;
+  ui.loadingNote.textContent = `3D archive ${pct}% ready. You can view the project list now.`;
 };
 manager.onLoad = () => {
   texturesReady = true;
   ui.enterButton.disabled = false;
-  ui.enterLabel.textContent = 'ENTER GALLERY';
+  ui.enterLabel.textContent = 'ENTER 3D ARCHIVE';
+  ui.loadingNote.textContent = '3D archive ready. Or skip straight to the project list.';
 };
 
 const textureLoader = new THREE.TextureLoader(manager);
@@ -170,7 +198,7 @@ const projectTextures = new Map();
 for (const project of projects) {
   const t = textureLoader.load(project.image);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
   projectTextures.set(project.id, t);
 }
 
@@ -178,12 +206,12 @@ function makeLabelTexture(project) {
   const c = document.createElement('canvas');
   c.width = 1024; c.height = 230;
   const x = c.getContext('2d');
-  x.fillStyle = '#eee9df'; x.fillRect(0, 0, c.width, c.height);
-  x.fillStyle = '#151411'; x.fillRect(0, 0, 9, c.height);
-  x.fillStyle = '#4d4941'; x.font = '30px monospace'; x.fillText(project.index, 44, 74);
-  x.fillStyle = '#12110f'; x.font = '600 52px Arial'; x.fillText(project.title.toUpperCase(), 145, 82);
-  x.fillStyle = '#625e56'; x.font = '28px monospace'; x.fillText(project.category, 145, 142);
-  x.fillStyle = '#918b80'; x.font = '24px monospace'; x.fillText('CLICK / TAP TO OPEN', 145, 190);
+  x.fillStyle = '#11130f'; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = '#c79d73'; x.fillRect(0, 0, 9, c.height);
+  x.fillStyle = '#aaa196'; x.font = '30px monospace'; x.fillText(project.index, 44, 74);
+  x.fillStyle = '#f0eadf'; x.font = '600 52px Arial'; x.fillText(project.title.toUpperCase(), 145, 82);
+  x.fillStyle = '#c8beb0'; x.font = '28px monospace'; x.fillText(project.category, 145, 142);
+  x.fillStyle = '#8f877b'; x.font = '24px monospace'; x.fillText('CLICK / TAP TO OPEN', 145, 190);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
@@ -243,8 +271,8 @@ scene.add(contactArt); interactables.push(contactArt);
 
 function roomTitleTexture(top, bottom) {
   const c = document.createElement('canvas'); c.width=1100; c.height=220; const x=c.getContext('2d');
-  x.fillStyle='#211f1b'; x.font='34px monospace'; x.fillText(top,20,62);
-  x.fillStyle='#211f1b'; x.font='italic 88px Georgia'; x.fillText(bottom,20,164);
+  x.fillStyle='#d1c7ba'; x.font='34px monospace'; x.fillText(top,20,62);
+  x.fillStyle='#f0eade'; x.font='italic 88px Georgia'; x.fillText(bottom,20,164);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
 }
 for (const [z,top,bottom] of [[12.8,'ROOM I','INTERIORS'],[3.15,'ROOM II','TRANSFORMATIONS'],[-5.85,'ROOM III','OCCASIONS']]) {
@@ -281,11 +309,11 @@ function openProject(project) {
   ui.projectDetail.textContent = project.detail;
   if (project.href) {
     ui.projectLink.href = project.href;
-    ui.projectLink.textContent = 'OPEN LIVE PROJECT ↗';
+    ui.projectLink.textContent = project.linkLabel || 'OPEN LIVE PROJECT ↗';
     ui.projectLink.classList.remove('disabled');
   } else {
     ui.projectLink.removeAttribute('href');
-    ui.projectLink.textContent = 'CONCEPT ARCHIVE / NO PUBLIC LINK';
+    ui.projectLink.textContent = project.linkLabel || 'CONCEPT ARCHIVE / NO PUBLIC LINK';
     ui.projectLink.classList.add('disabled');
   }
   openOverlay(ui.projectOverlay);
@@ -320,6 +348,8 @@ document.addEventListener('mousemove', e => {
   pitch = THREE.MathUtils.clamp(pitch, -1.08, 1.04);
 });
 
+ui.canvas.addEventListener('touchmove', e => { if (entered) e.preventDefault(); }, { passive: false });
+
 ui.canvas.addEventListener('click', e => {
   if (!entered || overlayOpen || !isFinePointer) return;
   if (document.pointerLockElement !== ui.canvas) {
@@ -337,7 +367,9 @@ ui.enterButton.addEventListener('click', () => {
   ui.entry.classList.add('leaving');
   ui.hud.classList.remove('hidden');
   ui.crosshair.classList.remove('hidden');
-  ui.desktopHint.classList.remove('hidden');
+  ui.firstHint.classList.remove('hidden');
+  ui.firstHint.style.animation = 'none';
+  requestAnimationFrame(() => { ui.firstHint.style.animation = ''; });
   ui.mobileControls.classList.remove('hidden');
   setTimeout(() => ui.entry.classList.add('gone'), 1000);
 });
@@ -408,6 +440,14 @@ const interactHint = document.createElement('div');
 interactHint.className = 'interact-hint'; interactHint.textContent='VIEW PROJECT  ↗'; document.body.appendChild(interactHint);
 
 // --- animation loop -------------------------------------------------------
+let activeRoom = 1;
+function updateRoomIndicator(z) {
+  const room = z > 4.05 ? 1 : z > -4.95 ? 2 : 3;
+  if (room === activeRoom) return;
+  activeRoom = room;
+  const meta = room === 1 ? ['ROOM I','INTERIORS','33.33%'] : room === 2 ? ['ROOM II','TRANSFORMATIONS','66.66%'] : ['ROOM III','OCCASIONS','100%'];
+  ui.roomNumber.textContent = meta[0]; ui.roomName.textContent = meta[1]; ui.roomProgress.style.width = meta[2];
+}
 const clock = new THREE.Clock();
 function animate() {
   const dt = Math.min(clock.getDelta(), .04);
@@ -438,6 +478,8 @@ function animate() {
       camera.position.y=1.65 + Math.sin(performance.now()*.004)*Math.min(.013,Math.abs(forward+strafe)*.013);
     }
 
+    updateRoomIndicator(camera.position.z);
+
     const hoverTarget = hitAt(window.innerWidth/2, window.innerHeight/2);
     document.body.classList.toggle('is-targeting', !!hoverTarget);
     interactHint.classList.toggle('show', !!hoverTarget);
@@ -453,5 +495,5 @@ animate();
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.65)); renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5)); renderer.setSize(window.innerWidth,window.innerHeight);
 });
