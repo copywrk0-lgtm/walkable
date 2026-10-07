@@ -299,6 +299,55 @@ for(const x of [-3.5,0,3.5]) for(const z of [-17,-19.3]) lotusRosette(x,6.93,z,.
 addPointLight(-4.7,-18.2,'#d18b46',22,9); addPointLight(4.7,-18.2,'#d18b46',22,9);
 const finalGlow=new THREE.PointLight('#f3c27d',28,12,2);finalGlow.position.set(0,5.6,-20.2);scene.add(finalGlow);
 
+// Authored-looking hero ornament: denser only at important bays, inspired by Indian carved-stone halls.
+function carvedHeroPillar(x,z,scale=1){
+  const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+  const part=(geo,mat,y)=>{const m=new THREE.Mesh(geo,mat);m.position.y=y;g.add(m);return m;};
+  // stepped plinth
+  for(const [y,r,h] of [[.08,.70,.16],[.22,.59,.12],[.34,.50,.12],[.46,.43,.10]]) part(new THREE.CylinderGeometry(r*scale,r*scale,h*scale,8),MAT.sandstoneDark,y*scale);
+  // lathe-turned shaft with alternating drums
+  let y=.62;
+  for(let i=0;i<9;i++){const r=(i%3===1?.34:i%3===2?.29:.39)*scale;part(new THREE.CylinderGeometry(r,r,(i%2?.22:.28)*scale,16),i%2?MAT.sandstoneLight:MAT.sandstone,y*scale);y+=i%2?.22:.28;}
+  part(new THREE.CylinderGeometry(.34*scale,.29*scale,.62*scale,16),MAT.sandstone,2.82*scale);
+  // ornate capital + bracket silhouette
+  part(new THREE.CylinderGeometry(.48*scale,.33*scale,.20*scale,8),MAT.sandstoneLight,3.24*scale);
+  part(new THREE.BoxGeometry(1.04*scale,.16*scale,1.04*scale),MAT.sandstoneDark,3.42*scale);
+  part(new THREE.BoxGeometry(1.30*scale,.15*scale,.76*scale),MAT.sandstoneLight,3.58*scale);
+  for(const side of [-1,1]){const b=part(new THREE.BoxGeometry(.46*scale,.50*scale,.34*scale),MAT.sandstone,3.76*scale);b.position.x=side*.42*scale;b.rotation.z=side*.52;}
+  // floral bosses around the hero capital
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;const boss=new THREE.Mesh(new THREE.OctahedronGeometry(.105*scale,1),MAT.brass);boss.position.set(Math.cos(a)*.44*scale,3.38*scale,Math.sin(a)*.44*scale);g.add(boss);}
+  return g;
+}
+function ceilingMandala(x,z,scale=1){
+  const g=new THREE.Group();g.position.set(x,4.43,z);g.rotation.x=Math.PI/2;scene.add(g);
+  for(let ring=0;ring<4;ring++){const r=.28+ring*.27;const t=new THREE.Mesh(new THREE.TorusGeometry(r*scale,.045*scale,8,32),ring===2?MAT.brass:MAT.sandstoneLight);g.add(t);}
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;const p=new THREE.Mesh(new THREE.OctahedronGeometry(.10*scale,0),MAT.sandstoneLight);p.position.set(Math.cos(a)*.82*scale,Math.sin(a)*.82*scale,.03);p.rotation.z=a;g.add(p);}
+  const pendant=new THREE.Mesh(new THREE.ConeGeometry(.22*scale,.34*scale,12),MAT.brass);pendant.rotation.x=-Math.PI/2;pendant.position.z=.18*scale;g.add(pendant);
+}
+function carvedPortal(z){
+  // layered jambs and corbelled lintel around the circulation opening
+  for(const x of [-2.75,2.75]){
+    box(x,2.18,z,.24,4.18,.66,MAT.sandstoneDark);
+    box(x+(x<0?.20:-.20),2.18,z-.02,.12,3.82,.72,MAT.sandstoneLight);
+    for(const y of [.58,1.12,1.66,2.20,2.74,3.28]) box(x+(x<0?.31:-.31),y,z-.36,.10,.12,.18,MAT.brass);
+  }
+  for(let i=0;i<4;i++) box(0,3.72+i*.18,z,5.75-i*.48,.14,.62-i*.06,i===2?MAT.sandstoneLight:MAT.sandstoneDark);
+  ceilingMandala(0,z-.28,.56);
+}
+// Replace uniformity at focal points with genuinely denser hero bays.
+for(const p of [[-3.15,1.72],[3.15,1.72],[-3.15,-1.72],[3.15,-1.72]]) carvedHeroPillar(p[0],p[1],1.08);
+for(const z of [7.45,0,-9.35]) ceilingMandala(0,z,1.0);
+carvedPortal(4.02); carvedPortal(-4.92);
+
+// Stone bench / parapet rhythm along quieter walls, creating architectural depth without ornament everywhere.
+for(const x of [-6.55,6.55]){
+  for(const z of [9.55,6.25,-.55,-2.65,-8.35,-11.15]){
+    const seat=box(x,.47,z,1.45,.46,.62,MAT.sandstoneDark);
+    const back=box(x,.92,z,1.45,.70,.18,MAT.sandstone);
+    if(Math.abs(x)>0){seat.rotation.y=Math.PI/2;back.rotation.y=Math.PI/2;}
+  }
+}
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
