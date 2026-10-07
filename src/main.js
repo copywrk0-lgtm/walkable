@@ -386,6 +386,55 @@ for(let ring=0;ring<5;ring++){
 }
 const drop=new THREE.Mesh(new THREE.ConeGeometry(.22,.52,16),MAT.brass);drop.position.y=-.27;canopy.add(drop);
 
+// Spatial composition pass: break the inherited corridor into rooms with compression, reveal and level change.
+function stairRun(zStart,zEnd,width=5.4,rise=.11,steps=5){
+  const dz=(zEnd-zStart)/steps;
+  for(let i=0;i<steps;i++){const z=zStart+dz*(i+.5);box(0,rise*(i+1)/2,z,width,rise*(i+1),Math.abs(dz)+.03,MAT.sandstoneDark);}
+}
+// Raised ceremonial dais under the grand mandapa.
+box(0,.09,0,7.35,.18,5.65,MAT.sandstoneDark);
+box(0,.16,0,6.65,.14,4.95,MAT.sandstone);
+stairRun(3.35,2.72,5.2,.055,4); stairRun(-2.72,-3.35,5.2,.055,4);
+
+// Side aisles partially screen the central hall, creating glimpses before full reveal.
+for(const x of [-4.35,4.35]){
+  for(const z of [3.0,1.5,0,-1.5,-3.0]){
+    const screen=box(x,1.72,z,.20,3.15,.95,MAT.sandstoneDark);
+    screen.rotation.y=(x<0?-.10:.10);
+  }
+}
+// Low parapets funnel the visitor toward the mandapa, then release into its full width.
+for(const x of [-3.8,3.8]){
+  box(x,.58,4.9,.34,1.12,2.0,MAT.sandstone);
+  box(x,.58,-5.8,.34,1.12,1.7,MAT.sandstone);
+}
+
+// Two offset thresholds prevent seeing the entire archive from the entrance.
+box(-5.85,2.18,5.25,4.1,4.36,.32,MAT.sandstoneDark);
+box(5.85,2.18,5.25,4.1,4.36,.32,MAT.sandstoneDark);
+box(-5.15,2.18,-5.95,5.3,4.36,.32,MAT.sandstoneDark);
+box(6.15,2.18,-5.95,3.3,4.36,.32,MAT.sandstoneDark);
+
+// Framed sightlines: freestanding portals reveal project bays before the visitor reaches them.
+function sightPortal(x,z,rotY=0){
+  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rotY;scene.add(g);
+  for(const sx of [-1.18,1.18]){const jamb=new THREE.Mesh(new THREE.BoxGeometry(.26,3.55,.42),MAT.sandstone);jamb.position.set(sx,1.78,0);g.add(jamb);}
+  const lintel=new THREE.Mesh(new THREE.BoxGeometry(2.8,.28,.48),MAT.sandstoneDark);lintel.position.y=3.52;g.add(lintel);
+  const crown=new THREE.Mesh(new THREE.BoxGeometry(2.28,.13,.55),MAT.sandstoneLight);crown.position.y=3.74;g.add(crown);
+}
+sightPortal(-3.95,8.25,Math.PI/2); sightPortal(3.95,-8.9,-Math.PI/2);
+
+// Small sunken pause court before the final approach: darker, quieter, then compression into Room VII.
+box(0,-.15,-12.95,6.8,.14,2.1,MAT.room3Floor);
+for(const x of [-3.55,3.55]) box(x,.42,-12.95,.42,.84,2.1,MAT.sandstoneDark);
+const pauseRing=new THREE.Mesh(new THREE.RingGeometry(1.15,1.23,40),MAT.brass);pauseRing.rotation.x=-Math.PI/2;pauseRing.position.set(0,-.065,-12.95);scene.add(pauseRing);
+
+// Taller visual canopy above the mandapa: dark void + suspended beams makes it feel larger than the side galleries.
+box(0,5.62,0,10.8,.10,7.2,MAT.room1Ceiling);
+for(const z of [-3,-1.5,0,1.5,3]) box(0,5.35,z,10.4,.18,.24,MAT.sandstoneDark);
+for(const x of [-4.7,-2.35,0,2.35,4.7]) box(x,5.18,0,.18,.18,6.5,MAT.sandstoneLight);
+const highGlow=new THREE.PointLight('#e3ad69',16,11,2);highGlow.position.set(0,5.15,0);scene.add(highGlow);
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
