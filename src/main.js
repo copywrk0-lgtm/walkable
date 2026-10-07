@@ -94,9 +94,9 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#11130f');
-scene.fog = new THREE.Fog('#11130f', 14, 34);
+scene.fog = new THREE.Fog('#100c08', 17, 48);
 
-const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 55);
+const camera = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.1, 72);
 camera.position.set(0, 1.65, 11.2);
 camera.rotation.order = 'YXZ';
 
@@ -281,6 +281,24 @@ for(const z of [10.55,5.7,2.85,-2.85,-7.05,-11.55]){
   }
 }
 
+// Compressed threshold and monumental Room VII: spatial compression followed by release.
+box(-4.45,2.2,-14.15,3.55,4.4,1.25,MAT.sandstoneDark);
+box(4.45,2.2,-14.15,3.55,4.4,1.25,MAT.sandstoneDark);
+box(0,3.48,-14.15,5.45,.22,1.25,MAT.sandstoneDark);
+for(const x of [-2.48,2.48]) templePillar(x,-13.72,.86);
+
+box(0,-.08,-18.15,15.4,.16,6.4,MAT.room3Floor);
+box(-7.45,3.65,-18.15,.48,7.3,6.4,MAT.sandstoneDark);
+box(7.45,3.65,-18.15,.48,7.3,6.4,MAT.sandstoneDark);
+box(0,7.18,-18.15,15.4,.18,6.4,MAT.room3Ceiling);
+box(0,3.65,-21.28,15.4,7.3,.48,MAT.sandstoneDark);
+for(const z of [-16.15,-18.15,-20.15]){templePillar(-5.5,z,1.2);templePillar(5.5,z,1.2);box(0,4.72,z,11.6,.24,.42,MAT.sandstoneDark);}
+for(const x of [-5.5,5.5]){box(x,4.52,-18.15,.86,.24,5.55,MAT.sandstone);box(x,4.78,-18.15,1.10,.16,5.55,MAT.sandstoneLight);}
+lotusRosette(0,6.93,-18.15,2.05);
+for(const x of [-3.5,0,3.5]) for(const z of [-17,-19.3]) lotusRosette(x,6.93,z,.68);
+addPointLight(-4.7,-18.2,'#d18b46',22,9); addPointLight(4.7,-18.2,'#d18b46',22,9);
+const finalGlow=new THREE.PointLight('#f3c27d',28,12,2);finalGlow.position.set(0,5.6,-20.2);scene.add(finalGlow);
+
 // sculptural wayfinding objects change material with each room
 box(0, 0.28, 7.4, 1.9, 0.56, 1.4, MAT.plinth1);
 box(0, 0.36, -0.7, 2.4, 0.72, 1.05, MAT.plinth2);
@@ -378,7 +396,7 @@ const contactArt = new THREE.Mesh(
   new THREE.PlaneGeometry(7.5, 3.95),
   new THREE.MeshBasicMaterial({ map: makeContactTexture(), toneMapped: false })
 );
-contactArt.position.set(0, 2.25, -14.42);
+contactArt.position.set(0, 3.65, -21.02);
 contactArt.userData = { type: 'contact' };
 scene.add(contactArt); interactables.push(contactArt);
 
@@ -488,7 +506,7 @@ ui.enterButton.addEventListener('click', () => {
 });
 
 const blockers = [
-  [-8.7,-7.96,-15,14], [7.96,8.7,-15,14], [-8.7,8.7,13.45,14.1], [-8.7,8.7,-15.1,-14.46],
+  [-8.7,-7.96,-15,14], [7.96,8.7,-15,14], [-8.7,8.7,13.45,14.1], [-8.1,-7.2,-21.6,-14.46], [7.2,8.1,-21.6,-14.46], [-8.1,8.1,-21.6,-21.25],
   [-8.6,-2.72,3.86,4.25], [2.72,8.6,3.86,4.25],
   [-8.6,-2.72,-5.13,-4.75], [2.72,8.6,-5.13,-4.75]
 ];
@@ -555,10 +573,10 @@ interactHint.className = 'interact-hint'; interactHint.textContent='VIEW PROJECT
 // --- animation loop -------------------------------------------------------
 let activeRoom = 1;
 function updateRoomIndicator(z) {
-  const room = z > 4.05 ? 1 : z > -4.95 ? 2 : 3;
+  const room = z > 4.05 ? 1 : z > -4.95 ? 2 : z > -14.5 ? 3 : 4;
   if (room === activeRoom) return;
   activeRoom = room;
-  const meta = room === 1 ? ['ROOM I','INTERIORS','33.33%'] : room === 2 ? ['ROOM II','TRANSFORMATIONS','66.66%'] : ['ROOM III','OCCASIONS','100%'];
+  const meta = room === 1 ? ['ROOM I','INTERIORS','25%'] : room === 2 ? ['ROOM II','TRANSFORMATIONS','50%'] : room === 3 ? ['ROOM III','OCCASIONS','75%'] : ['ROOM VII','UNASSIGNED','100%'];
   ui.roomNumber.textContent = meta[0]; ui.roomName.textContent = meta[1]; ui.roomProgress.style.width = meta[2];
 }
 const clock = new THREE.Clock();
